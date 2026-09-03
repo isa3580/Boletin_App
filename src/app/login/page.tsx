@@ -1,23 +1,57 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '../../lib/supabase';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('profesor');
+  const [errorMsg, setErrorMsg] = useState('');
+  const router = useRouter(); 
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log({ email, password, role });
-    alert(`Intentando iniciar sesión como ${role}. (Conexión a Supabase en proceso)`);
+    setErrorMsg('');
+    
+    try {
+      // Consulta real a la base de datos
+      const { data: usuario, error } = await supabase
+        .from('usuarios')
+        .select('rol, nombre')
+        .eq('correo', email)
+        .single();
+
+      if (error || !usuario) {
+        setErrorMsg('El correo ingresado no existe en el sistema.');
+        return;
+      }
+      
+      // Enrutamiento automático según el rol en la base de datos
+      switch (usuario.rol) {
+        case 'coordinador':
+          router.push('/dashboard/coordinador');
+          break;
+        case 'director':
+          router.push('/dashboard/director');
+          break;
+        case 'admin':
+          router.push('/dashboard/admin');
+          break;
+        default:
+          router.push('/dashboard/profesor'); 
+          break;
+      }
+    } catch (err) {
+      setErrorMsg('Error de conexión con el servidor.');
+    }
   };
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="bg-white p-8 rounded-2xl shadow-md max-w-md w-full border border-slate-100">
         
-        {/* Encabezado / Logo Escolar Temporal */}
+        {/* Encabezado */}
         <div className="text-center mb-8">
           <div className="inline-flex bg-blue-600 text-white p-3 rounded-xl mb-3 shadow-sm">
             <svg xmlns="http://w3.org" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -31,36 +65,12 @@ export default function LoginPage() {
         {/* Formulario */}
         <form onSubmit={handleSubmit} className="space-y-5">
           
-          {/* Selector de Rol */}
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">
-              Tipo de Usuario
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setRole('profesor')}
-                className={`py-2.5 text-sm font-medium rounded-xl border transition-all ${
-                  role === 'profesor'
-                    ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm'
-                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                Profesor
-              </button>
-              <button
-                type="button"
-                onClick={() => setRole('admin')}
-                className={`py-2.5 text-sm font-medium rounded-xl border transition-all ${
-                  role === 'admin'
-                    ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm'
-                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                Administrador
-              </button>
+          {/* Mensaje de Error */}
+          {errorMsg && (
+            <div className="bg-red-50 text-red-600 text-sm p-3 rounded-xl border border-red-100 text-center">
+              {errorMsg}
             </div>
-          </div>
+          )}
 
           {/* Correo Electrónico */}
           <div>
@@ -72,7 +82,7 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="ejemplo@colegio.com"
+              placeholder="carmen@colegio.com"
               className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             />
           </div>
