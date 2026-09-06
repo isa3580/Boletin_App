@@ -1,11 +1,6 @@
-'use client';
+import { redirect } from 'next/navigation';
 
 export default function RootPage() {
-  return (
-    <html>
-      <body>
-        <main></main>
-      </body>
-    </html>
-  );
+  redirect('/login');
 }
+
