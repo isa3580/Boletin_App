@@ -53,7 +53,7 @@ function sanitizeDocumentForPdf(doc: Document) {
 
 export async function generarPdfBase64(elementoHtml: HTMLElement): Promise<string> {
   const opciones = {
-    margin:       [8, 8, 8, 8] as [number, number, number, number],
+    margin:       [4, 6, 4, 6] as [number, number, number, number],
     filename:     'boletin.pdf',
     image:        { type: 'jpeg' as const, quality: 0.98 },
     html2canvas:  {
@@ -67,7 +67,8 @@ export async function generarPdfBase64(elementoHtml: HTMLElement): Promise<strin
         sanitizeDocumentForPdf(doc);
       }
     },
-    jsPDF:        { unit: 'mm', format: 'letter', orientation: 'portrait' as const }
+    jsPDF:        { unit: 'mm', format: 'letter', orientation: 'portrait' as const },
+    pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
   };
 
   const pdfBlob = await html2pdf().set(opciones).from(elementoHtml).outputPdf('blob');
@@ -111,7 +112,7 @@ Dirección y Coordinación Pedagógica
 
 /**
  * Función auxiliar para generar el HTML estático idéntico al componente BoletinDocumento.
- * Ideal para procesar de forma masiva sin necesidad de renderizar en pantalla.
+ * Diseñado y dimensionado meticulosamente para encajar en 1 sola página exacta tamaño Carta.
  */
 export function generarHtmlBoletin(datos: {
   nombreInstitucion?: string;
@@ -160,31 +161,31 @@ export function generarHtmlBoletin(datos: {
     const apreciacion = cal.apreciacion || (isPrimaria ? 'Registrado' : 'Puntaje Oficial');
     return `
       <tr style="background-color:${bg};border-bottom:1px solid #e2e8f0">
-        <td style="padding:8px 12px;font-weight:700;color:#1e293b">${cal.materia}</td>
-        <td style="padding:8px 12px;text-align:center;font-weight:900;font-size:12.5px;color:#1d4ed8">${cal.nota || '-'}</td>
-        <td style="padding:8px 12px;text-align:center;font-size:10.5px;color:#64748b;font-weight:600">${apreciacion}</td>
+        <td style="padding:4px 10px;font-weight:700;color:#1e293b;font-size:10px">${cal.materia}</td>
+        <td style="padding:4px 10px;text-align:center;font-weight:900;font-size:11px;color:#1d4ed8">${cal.nota || '-'}</td>
+        <td style="padding:4px 10px;text-align:center;font-size:9.5px;color:#64748b;font-weight:600">${apreciacion}</td>
       </tr>
     `;
   }).join('');
 
   return `
-    <div style="font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1e293b;background-color:#ffffff;padding:32px 36px;max-width:740px;margin:0 auto;box-sizing:border-box;line-height:1.45">
+    <div style="font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1e293b;background-color:#ffffff;padding:18px 24px;max-width:760px;margin:0 auto;box-sizing:border-box;line-height:1.35">
       
       <!-- MEMBRETE OFICIAL INSTITUCIONAL CON LOGO -->
-      <div style="border-bottom:2.5px solid #0f172a;padding-bottom:14px;margin-bottom:18px;display:flex;align-items:center;justify-content:center;gap:16px">
-        <img src="${LOGO_BASE64}" alt="Escudo Oficial" style="width:88px;height:88px;object-fit:cover;border-radius:50%;border:2px solid #0f172a;box-shadow:0 2px 8px rgba(15,23,42,0.10);flex-shrink:0" />
+      <div style="border-bottom:2px solid #0f172a;padding-bottom:10px;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:14px">
+        <img src="${LOGO_BASE64}" alt="Escudo Oficial" style="width:64px;height:64px;object-fit:cover;border-radius:50%;border:1.5px solid #0f172a;box-shadow:0 1px 4px rgba(15,23,42,0.10);flex-shrink:0" />
         <div style="text-align:center;flex:1">
-          <p style="font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:1.4px;color:#64748b;margin:0 0 3px 0">
+          <p style="font-size:7.5px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin:0 0 2px 0">
             REPÚBLICA BOLIVARIANA DE VENEZUELA • MINISTERIO DEL PODER POPULAR PARA LA EDUCACIÓN
           </p>
-          <h2 style="font-size:16px;font-weight:900;text-transform:uppercase;letter-spacing:-0.2px;color:#0f172a;margin:0 0 2px 0">
+          <h2 style="font-size:13.5px;font-weight:900;text-transform:uppercase;letter-spacing:-0.2px;color:#0f172a;margin:0 0 1px 0">
             ${nombreInstitucion}
           </h2>
-          <p style="font-size:10px;font-weight:600;color:#475569;margin:0 0 8px 0">
+          <p style="font-size:8.5px;font-weight:600;color:#475569;margin:0 0 5px 0">
             Código Plantel: ${codigoPlantel} • RIF: ${rifPlantel} • Fundado 1968
           </p>
           <div>
-            <span style="display:inline-block;background-color:#f1f5f9;color:#0f172a;font-size:10.5px;font-weight:900;padding:3px 16px;border-radius:9999px;text-transform:uppercase;letter-spacing:0.8px;border:1px solid #cbd5e1">
+            <span style="display:inline-block;background-color:#f1f5f9;color:#0f172a;font-size:9px;font-weight:900;padding:2px 14px;border-radius:9999px;text-transform:uppercase;letter-spacing:0.6px;border:1px solid #cbd5e1">
               Boletín Informativo de Rendimiento Estudiantil
             </span>
           </div>
@@ -192,52 +193,52 @@ export function generarHtmlBoletin(datos: {
       </div>
 
       <!-- DATOS DEL ESTUDIANTE -->
-      <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr;gap:10px;background-color:#f8fafc;padding:12px 14px;border-radius:12px;border:1px solid #e2e8f0;font-size:11px;margin-bottom:18px">
+      <div style="display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:8px;background-color:#f8fafc;padding:8px 10px;border-radius:8px;border:1px solid #e2e8f0;font-size:10px;margin-bottom:10px">
         <div>
-          <span style="font-size:9px;text-transform:uppercase;font-weight:800;color:#94a3b8;display:block">Estudiante:</span>
-          <span style="font-weight:900;color:#0f172a;font-size:12px">${nombreAlumno}</span>
+          <span style="font-size:8px;text-transform:uppercase;font-weight:800;color:#94a3b8;display:block">Estudiante:</span>
+          <span style="font-weight:900;color:#0f172a;font-size:11px">${nombreAlumno}</span>
         </div>
         <div>
-          <span style="font-size:9px;text-transform:uppercase;font-weight:800;color:#94a3b8;display:block">Grado / Sección:</span>
+          <span style="font-size:8px;text-transform:uppercase;font-weight:800;color:#94a3b8;display:block">Grado / Sección:</span>
           <span style="font-weight:800;color:#1e293b">${nombreGrado} &quot;${seccion}&quot;</span>
         </div>
         <div>
-          <span style="font-size:9px;text-transform:uppercase;font-weight:800;color:#94a3b8;display:block">Nivel Educativo:</span>
+          <span style="font-size:8px;text-transform:uppercase;font-weight:800;color:#94a3b8;display:block">Nivel Educativo:</span>
           <span style="font-weight:800;color:#1e293b;text-transform:capitalize">Educación ${nivel}</span>
         </div>
         <div>
-          <span style="font-size:9px;text-transform:uppercase;font-weight:800;color:#94a3b8;display:block">Período / Año:</span>
+          <span style="font-size:8px;text-transform:uppercase;font-weight:800;color:#94a3b8;display:block">Período / Año:</span>
           <span style="font-weight:800;color:#1e293b">${periodo} • ${anioEscolar}</span>
         </div>
       </div>
 
       <!-- TABLA DE CALIFICACIONES -->
-      <div style="margin-bottom:18px">
-        <h4 style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:0.6px;color:#1e293b;margin:0 0 6px 0">
+      <div style="margin-bottom:10px">
+        <h4 style="font-size:9.5px;font-weight:900;text-transform:uppercase;letter-spacing:0.5px;color:#1e293b;margin:0 0 4px 0">
           Calificaciones por Asignatura
         </h4>
-        <div style="border:1px solid #cbd5e1;border-radius:10px;overflow:hidden">
-          <table style="width:100%;border-collapse:collapse;font-size:11px;text-align:left">
+        <div style="border:1px solid #cbd5e1;border-radius:8px;overflow:hidden">
+          <table style="width:100%;border-collapse:collapse;font-size:10px;text-align:left">
             <thead>
-              <tr style="background-color:#f1f5f9;border-bottom:1.5px solid #cbd5e1">
-                <th style="padding:8px 12px;font-weight:900;text-transform:uppercase;color:#334155">Área de Formación / Asignatura</th>
-                <th style="padding:8px 12px;text-align:center;width:110px;font-weight:900;text-transform:uppercase;color:#334155">Calificación</th>
-                <th style="padding:8px 12px;text-align:center;width:160px;font-weight:900;text-transform:uppercase;color:#334155">Apreciación Pedagógica</th>
+              <tr style="background-color:#f1f5f9;border-bottom:1px solid #cbd5e1">
+                <th style="padding:4px 10px;font-weight:900;text-transform:uppercase;color:#334155;font-size:9px">Área de Formación / Asignatura</th>
+                <th style="padding:4px 10px;text-align:center;width:100px;font-weight:900;text-transform:uppercase;color:#334155;font-size:9px">Calificación</th>
+                <th style="padding:4px 10px;text-align:center;width:150px;font-weight:900;text-transform:uppercase;color:#334155;font-size:9px">Apreciación Pedagógica</th>
               </tr>
             </thead>
             <tbody>
-              ${califRows || '<tr><td colspan="3" style="padding:16px;text-align:center;color:#94a3b8">Sin calificaciones registradas</td></tr>'}
+              ${califRows || '<tr><td colspan="3" style="padding:8px;text-align:center;color:#94a3b8">Sin calificaciones registradas</td></tr>'}
             </tbody>
           </table>
         </div>
       </div>
 
       <!-- INFORME CUALITATIVO -->
-      <div style="margin-bottom:22px">
-        <h4 style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:0.6px;color:#1e293b;margin:0 0 6px 0">
+      <div style="margin-bottom:12px">
+        <h4 style="font-size:9.5px;font-weight:900;text-transform:uppercase;letter-spacing:0.5px;color:#1e293b;margin:0 0 4px 0">
           Informe Descriptivo del Rendimiento Estudiantil
         </h4>
-        <div style="padding:14px 16px;background-color:#fffbeb;border:1px solid #fde68a;border-radius:12px;font-size:11px;line-height:1.65;color:#1e293b">
+        <div style="padding:8px 12px;background-color:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:9.5px;line-height:1.45;color:#1e293b">
           <p style="margin:0;white-space:pre-wrap;text-align:justify;font-weight:500">
             &quot;${informeCualitativo || 'Sin informe registrado.'}&quot;
           </p>
@@ -245,35 +246,35 @@ export function generarHtmlBoletin(datos: {
       </div>
 
       <!-- FIRMAS Y SELLO -->
-      <div style="border-top:1px solid #e2e8f0;padding-top:18px;margin-top:18px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;text-align:center;font-size:10.5px;align-items:flex-end">
+      <div style="border-top:1px solid #e2e8f0;padding-top:10px;margin-top:10px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center;font-size:9.5px;align-items:flex-end">
         <div>
-          <div style="height:42px;border-bottom:1px solid #94a3b8;margin:0 12px 6px 12px"></div>
-          <p style="font-weight:800;color:#0f172a;margin:0 0 2px 0">${nombreDocente}</p>
-          <p style="font-size:9px;color:#64748b;margin:0">${rolDocenteCalculado}</p>
+          <div style="height:30px;border-bottom:1px solid #94a3b8;margin:0 12px 4px 12px"></div>
+          <p style="font-weight:800;color:#0f172a;margin:0 0 1px 0">${nombreDocente}</p>
+          <p style="font-size:8px;color:#64748b;margin:0">${rolDocenteCalculado}</p>
         </div>
         <div>
-          <div style="height:42px;border-bottom:1px solid #94a3b8;margin:0 12px 6px 12px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px">
-            ${coordinacionAprobada ? '<span style="font-size:9px;font-weight:800;color:#4338ca;background-color:#e0e7ff;padding:1px 8px;border-radius:6px;border:1px solid #c7d2fe">✓ Aprobado Coord.</span>' : ''}
+          <div style="height:30px;border-bottom:1px solid #94a3b8;margin:0 12px 4px 12px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:1px">
+            ${coordinacionAprobada ? '<span style="font-size:8px;font-weight:800;color:#4338ca;background-color:#e0e7ff;padding:1px 6px;border-radius:4px;border:1px solid #c7d2fe">✓ Aprobado Coord.</span>' : ''}
           </div>
-          <p style="font-weight:800;color:#0f172a;margin:0 0 2px 0">${nombreCoordinador}</p>
-          <p style="font-size:9px;color:#64748b;margin:0">Coordinación Pedagógica</p>
+          <p style="font-weight:800;color:#0f172a;margin:0 0 1px 0">${nombreCoordinador}</p>
+          <p style="font-size:8px;color:#64748b;margin:0">Coordinación Pedagógica</p>
         </div>
         <div style="position:relative">
-          <div style="height:42px;border-bottom:${direccionSellada ? '1.5px solid #d97706' : '1px dashed #94a3b8'};margin:0 12px 6px 12px;display:flex;align-items:center;justify-content:center;position:relative">
+          <div style="height:30px;border-bottom:${direccionSellada ? '1.5px solid #d97706' : '1px dashed #94a3b8'};margin:0 12px 4px 12px;display:flex;align-items:center;justify-content:center;position:relative">
             ${direccionSellada ? `
-              <div style="position:absolute;top:-18px;width:68px;height:68px;border:2px solid #b45309;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;background-color:rgba(254,243,199,0.45);transform:rotate(-8deg);box-sizing:border-box">
-                <span style="font-size:6px;font-weight:900;text-transform:uppercase;color:#78350f;letter-spacing:0.3px;text-align:center">U.E. SAN FRANCISCO</span>
-                <span style="font-size:5.5px;font-weight:800;color:#b45309;margin:1px 0">DIRECCIÓN</span>
-                <span style="font-size:4.5px;font-weight:700;color:#0f172a">SELLADO Y FIRMADO</span>
+              <div style="position:absolute;top:-12px;width:54px;height:54px;border:1.5px solid #b45309;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;background-color:rgba(254,243,199,0.45);transform:rotate(-8deg);box-sizing:border-box">
+                <span style="font-size:5px;font-weight:900;text-transform:uppercase;color:#78350f;letter-spacing:0.2px;text-align:center">U.E. SAN FRANCISCO</span>
+                <span style="font-size:4.5px;font-weight:800;color:#b45309;margin:0.5px 0">DIRECCIÓN</span>
+                <span style="font-size:3.8px;font-weight:700;color:#0f172a">SELLADO Y FIRMADO</span>
               </div>
-            ` : '<span style="font-size:9px;color:#94a3b8;font-weight:600;text-transform:uppercase">Sello Oficial</span>'}
+            ` : '<span style="font-size:8px;color:#94a3b8;font-weight:600;text-transform:uppercase">Sello Oficial</span>'}
           </div>
-          <p style="font-weight:800;color:#0f172a;margin:0 0 2px 0">${nombreDirector}</p>
-          <p style="font-size:9px;color:#64748b;margin:0">Dirección del Plantel</p>
+          <p style="font-weight:800;color:#0f172a;margin:0 0 1px 0">${nombreDirector}</p>
+          <p style="font-size:8px;color:#64748b;margin:0">Dirección del Plantel</p>
         </div>
       </div>
 
-      <div style="margin-top:16px;text-align:center;font-size:8.5px;color:#94a3b8;border-top:1px dotted #e2e8f0;padding-top:6px">
+      <div style="margin-top:8px;text-align:center;font-size:7.5px;color:#94a3b8;border-top:1px dotted #e2e8f0;padding-top:4px">
         Documento oficial avalado por el Sistema Escolar Integral • ${nombreInstitucion} • Generado automáticamente
       </div>
     </div>
