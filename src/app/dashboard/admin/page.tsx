@@ -302,11 +302,29 @@ export default function AdminDashboard() {
       }
 
       try {
-        const califsFormateadas = califsAlumno.map(c => ({
-          materia: c.materias?.nombre_materia || 'Materia',
-          nota: String(c.nota_literal || c.nota_num || '0'),
-          apreciacion: c.apreciacion || ''
-        }));
+        const califsFormateadas = califsAlumno.map(c => {
+          const valorNota = c.nota_literal || (c.nota_num !== null && c.nota_num !== undefined ? String(c.nota_num) : '-');
+          let apreciacion = c.apreciacion || '';
+          if (!apreciacion) {
+            if (c.nota_literal) {
+              if (c.nota_literal === 'A') apreciacion = 'Excelente rendimiento alcanzado';
+              else if (c.nota_literal === 'B') apreciacion = 'Buen rendimiento consolidado';
+              else if (c.nota_literal === 'C') apreciacion = 'Rendimiento aceptable';
+              else if (c.nota_literal === 'D') apreciacion = 'En proceso de consolidación';
+              else if (c.nota_literal === 'E') apreciacion = 'Requiere acompañamiento pedagógico';
+            } else if (c.nota_num !== null && c.nota_num !== undefined) {
+              if (c.nota_num >= 18) apreciacion = 'Excelente rendimiento';
+              else if (c.nota_num >= 14) apreciacion = 'Buen rendimiento';
+              else if (c.nota_num >= 10) apreciacion = 'Aceptable / Aprobado';
+              else apreciacion = 'En recuperación';
+            }
+          }
+          return {
+            materia: (Array.isArray(c.materias) ? c.materias[0]?.nombre_materia : c.materias?.nombre_materia) || 'Materia',
+            nota: valorNota,
+            apreciacion: apreciacion
+          };
+        });
 
         const htmlContenido = generarHtmlBoletin({
           nombreInstitucion: 'UNIDAD EDUCATIVA COLEGIO SAN FRANCISCO',
@@ -319,7 +337,7 @@ export default function AdminDashboard() {
           periodo: periodoDespacho,
           anioEscolar: anioEscolar,
           calificaciones: califsFormateadas,
-          informeCualitativo: rep?.informe_cualitativo || 'Sin informe cualitativo emitido.',
+          informeCualitativo: rep?.texto_cualitativo_ia || rep?.informe_cualitativo || 'Sin informe cualitativo emitido.',
           nombreDocente: docenteTitular ? `Prof. ${docenteTitular.nombre} ${docenteTitular.apellido}` : 'Docente Asignado',
           rolDocente: curso?.nivel?.toLowerCase() === 'primaria' ? 'Docente de Aula Titular' : 'Profesor Guía de Sección',
           nombreCoordinador: 'Lcdo. Roberto Gómez',
@@ -842,7 +860,7 @@ export default function AdminDashboard() {
       {/* Contenedor offscreen para renderizado y conversión de PDFs de forma limpia */}
       <div 
         ref={offscreenContainerRef} 
-        style={{ position: 'fixed', left: '-9999px', top: 0, width: '800px', backgroundColor: '#ffffff', zIndex: -100 }} 
+        style={{ position: 'fixed', top: 0, left: 0, width: '800px', backgroundColor: '#ffffff', zIndex: -9999, pointerEvents: 'none', opacity: 0.001 }} 
       />
 
       {/* Barra de Navegación Institucional */}

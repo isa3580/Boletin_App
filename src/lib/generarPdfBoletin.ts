@@ -24,7 +24,20 @@ function sanitizeDocumentForPdf(doc: Document) {
   `;
   doc.head.appendChild(cleanStyle);
 
-  // 3. Limpiar cualquier clase de Tailwind o atributo class en los elementos clonados
+  // 3. Forzar a que todos los contenedores clonados sean visibles y estén en posición fija normal
+  doc.querySelectorAll('div').forEach((el) => {
+    const htmlEl = el as HTMLElement;
+    if (htmlEl.style.position === 'fixed' || htmlEl.style.left === '-9999px') {
+      htmlEl.style.position = 'static';
+      htmlEl.style.left = '0';
+      htmlEl.style.top = '0';
+      htmlEl.style.opacity = '1';
+      htmlEl.style.visibility = 'visible';
+      htmlEl.style.zIndex = '1';
+    }
+  });
+
+  // 4. Limpiar cualquier clase de Tailwind o atributo class en los elementos clonados
   doc.querySelectorAll('*').forEach((el) => {
     const htmlEl = el as HTMLElement;
     htmlEl.removeAttribute('class');
@@ -47,6 +60,9 @@ export async function generarPdfBase64(elementoHtml: HTMLElement): Promise<strin
       scale: 2,
       useCORS: true,
       backgroundColor: '#ffffff',
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: 800,
       onclone: (doc: Document) => {
         sanitizeDocumentForPdf(doc);
       }
