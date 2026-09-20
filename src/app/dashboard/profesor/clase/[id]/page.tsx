@@ -3,7 +3,20 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '../../../../../lib/supabase';
-import { ANIO_ESCOLAR } from '../../../../../lib/constants';
+import { PERIODOS } from '../../../../../lib/constants';
+import { useAnioEscolar } from '../../../../../lib/config';
+import { 
+  IconArrowLeft, 
+  IconCheck, 
+  IconClock, 
+  IconDocument, 
+  IconEye, 
+  IconEdit, 
+  IconAlertCircle, 
+  IconUsers, 
+  IconBook, 
+  IconChevronRight 
+} from '../../../../../components/Icons';
 
 interface CursoItem {
   id: number;
@@ -30,6 +43,10 @@ export default function ListaAlumnosPorCursoPage() {
   const [usuario, setUsuario] = useState<any>(null);
   const [busqueda, setBusqueda] = useState('');
   const [cargando, setCargando] = useState(true);
+  const [periodoSeleccionado, setPeriodoSeleccionado] = useState<string>(PERIODOS[0]);
+  const [reportesAlumnos, setReportesAlumnos] = useState<Record<string, string>>({});
+  const [periodosCerrados, setPeriodosCerrados] = useState<string[]>([]);
+  const { anioEscolar } = useAnioEscolar();
 
   useEffect(() => {
     const stored = localStorage.getItem('usuarioActual');
@@ -54,6 +71,14 @@ export default function ListaAlumnosPorCursoPage() {
         if (cursoError) throw cursoError;
         setCursoInfo(cursoData);
 
+        const stored = localStorage.getItem('usuarioActual');
+        const user = stored ? JSON.parse(stored) : null;
+        if (user && cursoData.profesor_encargado_id !== user.id) {
+          alert("Solo el docente titular o profesor guía de este salón puede acceder.");
+          router.push('/dashboard/profesor');
+          return;
+        }
+
         // 2. Consultar los alumnos inscritos en este curso
         const { data: alumnosData, error: alumnosError } = await supabase
           .from('alumnos')
@@ -64,6 +89,28 @@ export default function ListaAlumnosPorCursoPage() {
         if (alumnosError) throw alumnosError;
         setEstudiantes(alumnosData || []);
 
+        // 3. Reportes de estos alumnos en el período seleccionado
+        const idsAlumnos = (alumnosData || []).map(a => a.id);
+        if (idsAlumnos.length > 0) {
+          const { data: reportesData } = await supabase
+            .from('reportes')
+            .select('alumno_id, estado')
+            .eq('periodo', periodoSeleccionado)
+            .in('alumno_id', idsAlumnos);
+          const mapa: Record<string, string> = {};
+          (reportesData || []).forEach(r => { mapa[r.alumno_id] = r.estado; });
+          setReportesAlumnos(mapa);
+        } else {
+          setReportesAlumnos({});
+        }
+
+        // 4. Consultar lapsos cerrados del año
+        const { data: cerradosData } = await supabase
+          .from('periodos_cerrados')
+          .select('periodo')
+          .eq('anio_escolar', anioEscolar);
+        setPeriodosCerrados((cerradosData || []).map(c => c.periodo));
+
       } catch (error: any) {
         console.error("Error al cargar el salón:", error.message || error);
       } finally {
@@ -72,7 +119,7 @@ export default function ListaAlumnosPorCursoPage() {
     };
 
     cargarDatosSalon();
-  }, [cursoId]);
+  }, [cursoId, periodoSeleccionado, periodosCerrados.join(',')]);
 
   const estudiantesFiltrados = estudiantes.filter((est) => {
     const nombreCompleto = `${est.nombre} ${est.apellido}`.toLowerCase();
@@ -81,35 +128,36 @@ export default function ListaAlumnosPorCursoPage() {
 
   const isPrimaria = cursoInfo?.nivel?.toLowerCase() === 'primaria';
 
-  // Paleta de colores suaves para los avatares escolares
   const getAvatarBg = (index: number) => {
     const colors = [
-      'bg-blue-100 text-blue-700 border-blue-200',
-      'bg-amber-100 text-amber-800 border-amber-200',
-      'bg-emerald-100 text-emerald-800 border-emerald-200',
-      'bg-indigo-100 text-indigo-800 border-indigo-200',
-      'bg-purple-100 text-purple-800 border-purple-200',
-      'bg-rose-100 text-rose-800 border-rose-200',
+      'bg-blue-50 text-blue-800 border-blue-200',
+      'bg-amber-50 text-amber-900 border-amber-200',
+      'bg-emerald-50 text-emerald-800 border-emerald-200',
+      'bg-indigo-50 text-indigo-800 border-indigo-200',
+      'bg-purple-50 text-purple-800 border-purple-200',
+      'bg-slate-100 text-slate-800 border-slate-200',
     ];
     return colors[index % colors.length];
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-100 via-slate-50 to-amber-50/20 text-slate-800">
+    <div className="min-h-screen bg-slate-50 text-slate-800 pb-16">
       
-      {/* Barra de Navegación Institucional Escolar */}
+      {/* Barra de Navegación Institucional con Logo */}
       <nav className="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-40 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3">
           
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 font-black shadow-md shadow-amber-500/20 text-lg">
-              🏫
-            </div>
+          <div className="flex items-center gap-3.5">
+            <img 
+              src="/logo.jpg" 
+              alt="Logo Colegio San Francisco" 
+              className="w-13 h-13 sm:w-14 sm:h-14 object-cover rounded-full shadow-md border-2 border-slate-700 bg-white flex-shrink-0" 
+            />
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-extrabold text-sm tracking-tight text-white">U.E. COLEGIO SAN FRANCISCO</span>
-                <span className="hidden sm:inline-block px-2 py-0.5 text-[10px] font-bold bg-amber-400/20 text-amber-300 rounded-full border border-amber-400/30">
-                  OFICIAL
+                <span className="font-extrabold text-sm tracking-tight text-white uppercase">U.E. COLEGIO SAN FRANCISCO</span>
+                <span className="hidden sm:inline-block px-2 py-0.5 text-[10px] font-bold bg-blue-400/20 text-blue-300 rounded-full border border-blue-400/30">
+                  DOCENCIA
                 </span>
               </div>
               <p className="text-[11px] text-slate-400 font-medium">Portal Docente • Registro de Calificaciones y Boletines</p>
@@ -121,7 +169,7 @@ export default function ListaAlumnosPorCursoPage() {
               <span className="text-xs font-bold text-slate-200">Prof. {usuario?.nombre} {usuario?.apellido}</span>
               <span className="text-[11px] text-slate-400">Docente Titular</span>
             </div>
-            <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-inner border-2 border-slate-700">
+            <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-inner border border-blue-500">
               {usuario?.nombre?.charAt(0)}{usuario?.apellido?.charAt(0)}
             </div>
           </div>
@@ -132,13 +180,14 @@ export default function ListaAlumnosPorCursoPage() {
       {/* Contenido Principal */}
       <main className="max-w-6xl mx-auto p-4 sm:p-6 space-y-6">
 
-        {/* Miga de Pan y Botón de Retorno */}
+        {/* Acciones de Navegación */}
         <div className="flex items-center justify-between">
           <button 
             onClick={() => router.push('/dashboard/profesor')}
-            className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-blue-600 transition-colors bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-sm hover:shadow"
+            className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-blue-600 transition-colors bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-sm"
           >
-            <span>←</span> Volver a Mis Salones
+            <IconArrowLeft className="w-4 h-4" />
+            <span>Volver a Mis Salones</span>
           </button>
           
           <div className="hidden sm:flex items-center gap-2 text-xs text-slate-400 font-medium">
@@ -151,9 +200,7 @@ export default function ListaAlumnosPorCursoPage() {
         </div>
 
         {/* Encabezado del Aula Escolar */}
-        <header className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white p-6 sm:p-8 shadow-xl border border-slate-800">
-          <div className="absolute top-0 right-0 -mt-8 -mr-8 w-60 h-60 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
+        <header className="relative overflow-hidden rounded-2xl bg-slate-900 text-white p-6 sm:p-8 shadow-md border border-slate-800">
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-3">
               <div className="flex flex-wrap items-center gap-2">
@@ -162,34 +209,33 @@ export default function ListaAlumnosPorCursoPage() {
                     ? 'bg-amber-400/20 text-amber-300 border border-amber-400/30' 
                     : 'bg-blue-400/20 text-blue-300 border border-blue-400/30'
                 }`}>
-                  <span>{isPrimaria ? '🖍️' : '📐'}</span>
+                  <IconBook className="w-3.5 h-3.5" />
                   Educación {cursoInfo?.nivel}
                 </span>
 
                 <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-white/10 text-slate-200 border border-white/10">
-                  Año Escolar {ANIO_ESCOLAR}
+                  Año Escolar {anioEscolar}
                 </span>
               </div>
 
               <div>
                 <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-3">
-                  <span>📖</span>
                   {cursoInfo ? `${cursoInfo.nombre_grado} "${cursoInfo.seccion}"` : 'Cargando salón escolar...'}
                 </h1>
                 <p className="text-xs sm:text-sm text-slate-300 mt-1">
-                  Listado oficial de la matrícula estudiantil. Selecciona a un alumno para evaluar su rendimiento pedagógico.
+                  Nómina oficial de estudiantes. Selecciona un alumno para evaluar su rendimiento y redactar su informe.
                 </p>
               </div>
             </div>
 
             {/* Ficha Resumen de Matrícula */}
-            <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/15 min-w-[210px] space-y-2">
+            <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/15 min-w-[200px] space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Matrícula</span>
                 <span className="text-xl font-black text-white">{estudiantes.length}</span>
               </div>
               <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
-                <div className="bg-amber-400 h-full w-full rounded-full"></div>
+                <div className="bg-blue-400 h-full w-full rounded-full"></div>
               </div>
               <p className="text-[10px] text-slate-300">
                 100% Expedientes activos
@@ -202,15 +248,12 @@ export default function ListaAlumnosPorCursoPage() {
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
           
           <div className="relative w-full sm:max-w-md">
-            <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 text-sm">
-              🔍
-            </span>
             <input
               type="text"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder="Buscar estudiante por nombre o apellido..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="w-full pl-4 pr-10 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
             />
             {busqueda && (
               <button 
@@ -231,17 +274,36 @@ export default function ListaAlumnosPorCursoPage() {
 
         </div>
 
-        {/* Listado de Estudiantes Estilo Expediente Escolar */}
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+        {/* Listado de Estudiantes */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           
           <div className="p-5 border-b border-slate-100 bg-slate-50/70 flex justify-between items-center">
-            <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-2">
-              <span>👨‍🎓</span> Nómina Oficial de Estudiantes
+            <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+              <IconUsers className="w-4 h-4 text-slate-500" />
+              Nómina Oficial de Estudiantes
             </h2>
-            <span className="text-[11px] text-slate-400 font-medium">
-              Período Activo
-            </span>
+            <select
+              value={periodoSeleccionado}
+              onChange={(e) => setPeriodoSeleccionado(e.target.value)}
+              className="text-xs font-bold text-slate-800 bg-transparent border-none focus:outline-none cursor-pointer"
+            >
+              {PERIODOS.map((p) => (
+                <option key={p} value={p} disabled={periodosCerrados.includes(p)}>
+                  {p} {periodosCerrados.includes(p) ? '(Cerrado)' : ''}
+                </option>
+              ))}
+            </select>
           </div>
+
+          {periodosCerrados.includes(periodoSeleccionado) && (
+            <div className="p-4 bg-rose-50 border-2 border-rose-300 text-rose-800 rounded-xl flex items-center gap-3">
+              <IconAlertCircle className="w-5 h-5 text-rose-600 flex-shrink-0" />
+              <div>
+                <p className="text-xs font-bold">Este lapso está cerrado por administración.</p>
+                <p className="text-[11px] text-rose-700">No se pueden registrar evaluaciones hasta que la administración lo habilite.</p>
+              </div>
+            </div>
+          )}
 
           {cargando ? (
             <div className="flex flex-col items-center justify-center h-48">
@@ -255,39 +317,102 @@ export default function ListaAlumnosPorCursoPage() {
                 return (
                   <div 
                     key={estudiante.id} 
-                    className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-blue-50/30 transition-all group"
+                    className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-slate-50 transition-all group"
                   >
                     
                     <div className="flex items-center gap-4">
-                      <div className={`w-11 h-11 rounded-2xl flex items-center justify-center font-black text-xs border shadow-sm ${getAvatarBg(index)}`}>
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs border ${getAvatarBg(index)}`}>
                         {iniciales || 'AL'}
                       </div>
                       
                       <div>
-                        <p className="font-extrabold text-slate-900 text-sm group-hover:text-blue-700 transition-colors">
+                        <p className="font-bold text-slate-900 text-sm group-hover:text-blue-700 transition-colors">
                           {estudiante.nombre} {estudiante.apellido}
                         </p>
                         <div className="flex flex-wrap items-center gap-2 mt-0.5">
                           <span className="text-[11px] text-slate-500 font-mono font-medium bg-slate-100 px-2 py-0.5 rounded-md">
-                            Expediente: #{estudiante.id.slice(0, 8)}
+                            Exp. #{estudiante.id.slice(0, 8)}
                           </span>
                           <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                             Matrícula Regular
                           </span>
+                          {reportesAlumnos[estudiante.id] === 'borrador' && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                              <IconClock className="w-3 h-3 text-amber-600" />
+                              Borrador Guardado
+                            </span>
+                          )}
+                          {reportesAlumnos[estudiante.id] === 'devuelto_profesor' && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                              <IconAlertCircle className="w-3 h-3 text-rose-600" />
+                              Devuelto para Ajustes
+                            </span>
+                          )}
+                          {reportesAlumnos[estudiante.id] === 'en_revision_coordinador' && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
+                              <IconClock className="w-3 h-3 text-purple-600" />
+                              En Coordinación
+                            </span>
+                          )}
+                          {reportesAlumnos[estudiante.id] === 'aprobado_coordinador' && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                              <IconCheck className="w-3 h-3 text-blue-600" />
+                              Aprobado
+                            </span>
+                          )}
+                          {reportesAlumnos[estudiante.id] === 'enviado' && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                              <IconCheck className="w-3 h-3 text-emerald-600" />
+                              Enviado
+                            </span>
+                          )}
+                          {!reportesAlumnos[estudiante.id] && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
+                              Sin evaluar
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
                     
                     <div className="w-full sm:w-auto flex justify-end">
-                      <button
-                        onClick={() => router.push(`/dashboard/profesor/clase/${cursoId}/alumno/${estudiante.id}`)}
-                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-slate-900 hover:bg-blue-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5"
-                      >
-                        <span>📝</span>
-                        <span>Evaluar Desempeño</span>
-                        <span className="text-slate-400 group-hover:text-white transition-colors">→</span>
-                      </button>
+                      {(() => {
+                        const estado = reportesAlumnos[estudiante.id];
+                        const esDevuelto = estado === 'devuelto_profesor';
+                        const esBorrador = estado === 'borrador';
+                        const bloqueado = estado === 'en_revision_coordinador' || estado === 'aprobado_coordinador' || estado === 'enviado';
+                        
+                        if (bloqueado) {
+                          return (
+                            <button
+                              onClick={() => router.push(`/dashboard/profesor/clase/${cursoId}/alumno/${estudiante.id}`)}
+                              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 text-xs font-bold px-4 py-2.5 rounded-xl border border-slate-300 transition-all shadow-sm cursor-pointer"
+                              title="Ver el boletín y calificaciones registradas"
+                            >
+                              <IconEye className="w-3.5 h-3.5 text-blue-600" />
+                              <span>{estado === 'enviado' ? 'Ver Boletín Enviado' : estado === 'aprobado_coordinador' ? 'Ver Boletín Aprobado' : 'Ver en Revisión'}</span>
+                            </button>
+                          );
+                        }
+                        
+                        return (
+                          <button
+                            onClick={() => router.push(`/dashboard/profesor/clase/${cursoId}/alumno/${estudiante.id}`)}
+                            className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer ${
+                              esDevuelto 
+                                ? 'bg-rose-600 hover:bg-rose-700 active:bg-rose-800' 
+                                : esBorrador
+                                ? 'bg-amber-600 hover:bg-amber-700 active:bg-amber-800'
+                                : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
+                            }`}
+                          >
+                            <IconEdit className="w-3.5 h-3.5" />
+                            <span>{esDevuelto ? 'Corregir Reporte' : esBorrador ? 'Continuar Evaluación' : 'Evaluar Alumno'}</span>
+                            <IconChevronRight className="w-3.5 h-3.5 text-white/70 group-hover:text-white transition-colors" />
+                          </button>
+                        );
+                      })()}
                     </div>
 
                   </div>
@@ -296,7 +421,6 @@ export default function ListaAlumnosPorCursoPage() {
 
               {estudiantesFiltrados.length === 0 && estudiantes.length > 0 && (
                 <div className="p-12 text-center text-slate-500 space-y-2">
-                  <div className="text-3xl">🔍</div>
                   <p className="text-sm font-bold text-slate-700">No se encontraron estudiantes</p>
                   <p className="text-xs text-slate-400">
                     No hay ningún estudiante que coincida con "{busqueda}".
@@ -312,7 +436,7 @@ export default function ListaAlumnosPorCursoPage() {
 
               {estudiantes.length === 0 && (
                 <div className="p-12 text-center text-slate-500 space-y-3">
-                  <div className="text-4xl">📚</div>
+                  <IconDocument className="w-8 h-8 text-slate-300 mx-auto" />
                   <p className="text-sm font-bold text-slate-700">No hay estudiantes inscritos</p>
                   <p className="text-xs text-slate-400 max-w-sm mx-auto">
                     Este curso aún no tiene alumnos registrados en la base de datos para el período escolar activo.

@@ -6,4 +6,4 @@ export const PERIODOS = [
 
 export type Periodo = typeof PERIODOS[number];
 
-export const ANIO_ESCOLAR = '2024-2025';
+export const ANIO_ESCOLAR = '2026-2027';

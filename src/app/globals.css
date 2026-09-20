@@ -24,3 +24,71 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@media print {
+  /* Eliminar fondos oscuros, barras de scroll y límites de altura */
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Ocultar barras de scroll del navegador */
+  * {
+    overflow: visible !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+
+  *::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  /* Resetear contenedores fijos y modales */
+  .fixed {
+    position: static !important;
+    inset: auto !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    display: block !important;
+  }
+
+  /* Resetear límites de tarjetas y sombras */
+  [class*="overflow-"],
+  [class*="max-h-"],
+  [class*="shadow-"] {
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+    box-shadow: none !important;
+  }
+
+  .rounded-3xl, .rounded-2xl, .rounded-xl {
+    border-radius: 0 !important;
+  }
+
+  /* Elementos a ocultar en la impresión */
+  .print\:hidden {
+    display: none !important;
+  }
+
+  @page {
+    size: letter portrait;
+    margin: 8mm 10mm;
+  }
+}
