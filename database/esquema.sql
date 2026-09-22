@@ -133,11 +133,11 @@
 
     -- 1. Usuarios Directivos y Docentes
     INSERT INTO usuarios (id, nombre, apellido, correo, contrasena, rol, nivel_asignado) VALUES 
-    ('40000000-0000-0000-0000-000000000004', 'Luisa', 'Pérez', 'director@colegio.com', 'director2025', 'director', NULL),
-    ('50000000-0000-0000-0000-000000000005', 'Roberto', 'Gómez', 'coordinador@colegio.com', 'coord2025', 'coordinador', 'primaria'),
-    ('10000000-0000-0000-0000-000000000001', 'Carmen', 'Rivas', 'carmen@colegio.com', 'profe2025', 'profesor', 'primaria'), 
-    ('20000000-0000-0000-0000-000000000002', 'José', 'Silva', 'jose@colegio.com', 'profe2025', 'profesor', 'secundaria'),
-    ('30000000-0000-0000-0000-000000000003', 'Control', 'Estudios', 'control@colegio.com', 'control2025', 'admin', NULL)
+    ('40000000-0000-0000-0000-000000000004', 'Luisa', 'Pérez', 'director@colegio.com', '123456', 'director', NULL),
+    ('50000000-0000-0000-0000-000000000005', 'Roberto', 'Gómez', 'coordinador@colegio.com', '123456', 'coordinador', 'primaria'),
+    ('10000000-0000-0000-0000-000000000001', 'Carmen', 'Rivas', 'carmen@colegio.com', '123456', 'profesor', 'primaria'), 
+    ('20000000-0000-0000-0000-000000000002', 'José', 'Silva', 'jose@colegio.com', '123456', 'profesor', 'secundaria'),
+    ('30000000-0000-0000-0000-000000000003', 'Control', 'Estudios', 'control@colegio.com', '123456', 'admin', NULL)
     ON CONFLICT (id) DO NOTHING;
 
     -- 2. Cursos (Con Docente Titular en Primaria y Profesor Guía en Secundaria)

@@ -95,6 +95,20 @@ Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
 ---
 
+## 🔐 Credenciales de Acceso (Cuentas de Demostración)
+
+Para evaluar y probar cada uno de los paneles y flujos de trabajo del sistema, se encuentran disponibles las siguientes cuentas de prueba:
+
+| Rol / Módulo | Correo Electrónico | Contraseña | Nivel / Asignación |
+| :--- | :--- | :--- | :--- |
+| **Administrador** | `control@colegio.com` | `123456` | Control de Estudios y Despacho Masivo |
+| **Director(a)** | `director@colegio.com` | `123456` | Dirección General (Sello y Firma Digital) |
+| **Coordinador(a)** | `coordinador@colegio.com` | `123456` | Coordinación Pedagógica (Revisión/Aprobación) |
+| **Docente (Primaria)** | `carmen@colegio.com` | `123456` | 6to Grado "A" (Evaluación Cualitativa Literal A–E) |
+| **Docente (Secundaria)** | `jose@colegio.com` | `123456` | 4to Año "B" (Evaluación Cuantitativa Numérica 0–20) |
+
+---
+
 ## 🛠️ Tecnologías Principales
 - **Framework:** Next.js 16 (App Router + Turbopack + TypeScript)
 - **Estilos:** Tailwind CSS
